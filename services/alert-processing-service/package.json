@@ -1,0 +1,13 @@
+{
+  "name": "alert-processing-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "kafkajs": "^2.2.4",
+    "node-fetch": "^2.6.7"
+  }
+}

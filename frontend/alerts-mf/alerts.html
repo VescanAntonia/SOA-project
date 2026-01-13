@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Travel Alerts</h1>
+    <div id="auth">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p id="auth-status"></p>
+    </div>
+    <div id="alerts" style="display:none;">
+        <h2>Your Alerts</h2>
+        <ul id="alert-list"></ul>
+    </div>
+
+    <script>
+        let socket;
+        let userId;
+
+        function showAuthStatus(msg) {
+            document.getElementById('auth-status').textContent = msg;
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                userId = username; 
+                showAuthStatus('Logged in');
+                document.getElementById('auth').style.display = 'none';
+                document.getElementById('alerts').style.display = 'block';
+                connectSocket();
+            } else {
+                showAuthStatus(data.error);
+            }
+        }
+
+        function connectSocket() {
+    socket = io({ path: '/ws/socket.io' });
+
+    socket.on('connect', () => {
+      socket.emit('join', userId);
+    });
+
+    socket.on('alert', (data) => {
+      const ul = document.getElementById('alert-list');
+      const li = document.createElement('li');
+      li.textContent = `Alert: ${data.type} for itinerary ${data.itineraryId} - ${JSON.stringify(data.payload)}`;
+      ul.appendChild(li);
+    });
+  }
+    </script>
+</body>
+</html>

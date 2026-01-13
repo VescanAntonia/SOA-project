@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Itinerary Management</title>
+</head>
+<body>
+    <h1>Itinerary Management</h1>
+    <div id="auth">
+        <h2>Login/Register</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="register()">Register</button>
+        <button onclick="login()">Login</button>
+        <p id="auth-status"></p>
+    </div>
+    <div id="itineraries" style="display:none;">
+        <h2>Your Itineraries</h2>
+        <form onsubmit="createItinerary(event)">
+            <input type="text" id="tripName" placeholder="Trip Name" required>
+            <input type="text" id="flightNumber" placeholder="Flight Number" required>
+            <input type="text" id="destination" placeholder="Destination" required>
+            <input type="date" id="travelDate" required>
+            <button type="submit">Create Itinerary</button>
+            <button onclick="logout()">Logout</button>
+
+        </form>
+        <ul id="itinerary-list"></ul>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+
+        function showAuthStatus(msg) {
+            document.getElementById('auth-status').textContent = msg;
+        }
+
+        async function register() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showAuthStatus('Registered successfully');
+            } else {
+                showAuthStatus(data.error);
+            }
+        }
+
+        function logout() {
+    localStorage.removeItem("token");
+    token = null;
+
+    document.getElementById("itineraries").style.display = "none";
+    document.getElementById("auth").style.display = "block";
+
+    document.getElementById("auth-status").textContent = "Logged out";
+  } 
+  
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                token = data.token;
+                localStorage.setItem('token', token);
+                showAuthStatus('Logged in');
+                document.getElementById('auth').style.display = 'none';
+                document.getElementById('itineraries').style.display = 'block';
+                loadItineraries();
+            } else {
+                showAuthStatus(data.error);
+            }
+        }
+
+        async function createItinerary(event) {
+            event.preventDefault();
+            const tripName = document.getElementById('tripName').value;
+            const flightNumber = document.getElementById('flightNumber').value;
+            const destination = document.getElementById('destination').value;
+            const travelDate = document.getElementById('travelDate').value;
+            const res = await fetch('/api/itineraries', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ tripName, flightNumber, destination, travelDate })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                loadItineraries();
+            } else {
+                alert(data.error);
+            }
+        }
+
+        async function loadItineraries() {
+            const res = await fetch('/api/itineraries', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const list = await res.json();
+            const ul = document.getElementById('itinerary-list');
+            ul.innerHTML = '';
+            list.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = `${item.tripName} - ${item.flightNumber} to ${item.destination} on ${item.travelDate}`;
+                ul.appendChild(li);
+            });
+        }
+
+        if (token) {
+            document.getElementById('auth').style.display = 'none';
+            document.getElementById('itineraries').style.display = 'block';
+            loadItineraries();
+        }
+    </script>
+</body>
+</html>
