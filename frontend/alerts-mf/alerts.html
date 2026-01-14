@@ -1,67 +1,282 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alerts</title>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Alerts</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --card: rgba(255,255,255,0.06);
+      --text: #eef2ff;
+      --muted: rgba(238,242,255,0.72);
+      --border: rgba(255,255,255,0.14);
+      --accent: #7c3aed;
+      --good: #22c55e;
+      --bad: #ef4444;
+      --shadow: 0 14px 40px rgba(0,0,0,0.35);
+      --r: 16px;
+      --r2: 12px;
+    }
+
+    *{ box-sizing: border-box; }
+    html, body{ height: 100%; }
+
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--text);
+      background:
+        radial-gradient(900px 500px at 15% 10%, rgba(124,58,237,0.26), transparent 60%),
+        radial-gradient(800px 450px at 85% 20%, rgba(34,197,94,0.16), transparent 60%),
+        linear-gradient(180deg, #070a15, var(--bg));
+    }
+    .row{
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .container{
+      width: min(900px, 92vw);
+      margin: 0 auto;
+      padding: 28px 0 56px;
+    }
+
+    .title{
+      margin: 0 0 6px;
+      font-size: clamp(28px, 3vw, 42px);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle{
+      margin: 0 0 18px;
+      color: var(--muted);
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+
+    .card h2{
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .input{
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.22);
+      color: var(--text);
+      margin-bottom: 10px;
+      margin-bottom: 14px;
+    }
+
+    .btn{
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    .btn.primary{
+      background: rgba(124,58,237,0.30);
+      border-color: rgba(124,58,237,0.55);
+    }
+
+    .status{
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .list{
+      list-style: none;
+      padding: 0;
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .list-item{
+      border-radius: var(--r2);
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      padding: 12px;
+      line-height: 1.35;
+    }
+  </style>
 </head>
+
 <body>
-    <h1>Travel Alerts</h1>
-    <div id="auth">
-        <h2>Login</h2>
-        <input type="text" id="username" placeholder="Username">
-        <input type="password" id="password" placeholder="Password">
-        <button onclick="login()">Login</button>
-        <p id="auth-status"></p>
+  <div class="container">
+    <h1 class="title">Travel Alerts</h1>
+    <p class="subtitle">Login to receive real-time alerts via WebSockets.</p>
+
+    <div id="auth" class="card">
+      <h2>Login</h2>
+
+      <input class="input" type="text" id="username" placeholder="Username">
+      <input class="input" type="password" id="password" placeholder="Password">
+
+      <button class="btn primary" onclick="login()">Login</button>
+      <p id="auth-status" class="status"></p>
     </div>
-    <div id="alerts" style="display:none;">
-        <h2>Your Alerts</h2>
-        <ul id="alert-list"></ul>
+
+    <div id="alerts" class="card" style="display:none;">
+      <h2>Your Alerts</h2>
+      <ul id="alert-list" class="list"></ul>
     </div>
+  </div>
 
-    <script>
-        let socket;
-        let userId;
+  <script>
+    let socket;
+    let userId;
 
-        function showAuthStatus(msg) {
-            document.getElementById('auth-status').textContent = msg;
-        }
+    function showAuthStatus(msg) {
+      document.getElementById('auth-status').textContent = msg;
+    }
 
-        async function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                userId = username; 
-                showAuthStatus('Logged in');
-                document.getElementById('auth').style.display = 'none';
-                document.getElementById('alerts').style.display = 'block';
-                connectSocket();
-            } else {
-                showAuthStatus(data.error);
-            }
-        }
+    async function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
 
-        function connectSocket() {
-    socket = io({ path: '/ws/socket.io' });
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
 
-    socket.on('connect', () => {
-      socket.emit('join', userId);
-    });
+      const data = await res.json();
 
-    socket.on('alert', (data) => {
-      const ul = document.getElementById('alert-list');
-      const li = document.createElement('li');
-      li.textContent = `Alert: ${data.type} for itinerary ${data.itineraryId} - ${JSON.stringify(data.payload)}`;
-      ul.appendChild(li);
-    });
+      if (res.ok) {
+        userId = username;
+        showAuthStatus('Logged in');
+
+        document.getElementById('auth').style.display = 'none';
+        document.getElementById('alerts').style.display = 'block';
+
+        connectSocket();
+      } else {
+        showAuthStatus(data.error);
+      }
+    }
+
+    function connectSocket() {
+      socket = io({ path: '/ws/socket.io' });
+
+      socket.on('connect', () => {
+        socket.emit('join', userId);
+      });
+
+      socket.on('alert', (incoming) => {
+  const ul = document.getElementById('alert-list');
+  const li = document.createElement('li');
+  li.className = 'list-item';
+
+  let event = incoming;
+  for (let i = 0; i < 3; i++) {
+    if (event && event.payload && typeof event.payload === 'object') {
+      if (event.payload.type || event.payload.flightNumber || event.payload.city || event.payload.destination) {
+        event = event.payload;
+        break;
+      }
+      event = event.payload;
+    } else {
+      break;
+    }
   }
-    </script>
+
+  const type = event?.type || incoming?.type || 'ALERT';
+  const itineraryId = incoming?.itineraryId ?? event?.itineraryId ?? '?';
+
+  const flight =
+    event?.flightNumber ??
+    event?.payload?.flightNumber ??
+    incoming?.flightNumber ??
+    incoming?.payload?.flightNumber ??
+    'Unknown';
+
+  const city =
+    event?.city ??
+    event?.destination ??
+    event?.payload?.city ??
+    event?.payload?.destination ??
+    incoming?.city ??
+    incoming?.destination ??
+    'Unknown';
+
+  const minutes =
+    event?.payload?.minutes ??
+    event?.payload?.payload?.minutes;
+
+  const reason =
+    event?.payload?.reason ??
+    event?.payload?.payload?.reason;
+
+  const message =
+    event?.payload?.message ??
+    event?.payload?.payload?.message;
+
+  const severity =
+    event?.payload?.severity ??
+    event?.payload?.payload?.severity;
+
+  let title = '🔔 Travel Alert';
+  if (type === 'FLIGHT_DELAY') title = '✈️ Flight Delay';
+  if (type === 'CITY_ALERT') title = '🏙️ City Alert';
+
+  let html = `
+    <div class="row" style="justify-content: space-between;">
+      <strong>${escapeHtml(title)}</strong>
+      <span class="badge">Itinerary ${escapeHtml(String(itineraryId))}</span>
+    </div>
+  `;
+
+  if (type === 'FLIGHT_DELAY') {
+    html += `<div>Flight: <strong>${escapeHtml(String(flight))}</strong></div>`;
+    if (minutes != null) html += `<div>Delay: <strong>${escapeHtml(String(minutes))} minutes</strong></div>`;
+    if (reason) html += `<div>Reason: ${escapeHtml(String(reason))}</div>`;
+  } else if (type === 'CITY_ALERT') {
+    html += `<div>City: <strong>${escapeHtml(String(city))}</strong></div>`;
+    if (severity) html += `<div>Severity: <span class="badge ${severityBadgeClass(severity)}">${escapeHtml(String(severity))}</span></div>`;
+    if (message) html += `<div>${escapeHtml(String(message))}</div>`;
+  } else {
+    html += `<div class="mono">${escapeHtml(JSON.stringify(incoming, null, 2))}</div>`;
+  }
+
+  li.innerHTML = html;
+  ul.prepend(li);
+});
+    }
+    function severityBadgeClass(sev) {
+  const s = String(sev).toLowerCase();
+  if (s === 'high') return 'bad';
+  if (s === 'medium') return '';
+  if (s === 'low') return 'good';
+  return '';
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
+  </script>
 </body>
 </html>

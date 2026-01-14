@@ -1,129 +1,259 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Itinerary Management</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Itinerary Management</title>
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --card: rgba(255,255,255,0.06);
+      --text: #eef2ff;
+      --muted: rgba(238,242,255,0.72);
+      --border: rgba(255,255,255,0.14);
+      --accent: #7c3aed;
+      --good: #22c55e;
+      --bad: #ef4444;
+      --shadow: 0 14px 40px rgba(0,0,0,0.35);
+      --r: 16px;
+      --r2: 12px;
+    }
+
+    *{ box-sizing: border-box; }
+    html, body{ height: 100%; }
+
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--text);
+      background:
+        radial-gradient(900px 500px at 15% 10%, rgba(124,58,237,0.26), transparent 60%),
+        radial-gradient(800px 450px at 85% 20%, rgba(34,197,94,0.16), transparent 60%),
+        linear-gradient(180deg, #070a15, var(--bg));
+    }
+
+    .container{
+      width: min(980px, 92vw);
+      margin: 0 auto;
+      padding: 28px 0 56px;
+    }
+
+    .title{
+      margin: 0 0 18px;
+      font-size: clamp(28px, 3vw, 42px);
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    .card h2{
+      margin: 0 0 16px;
+      font-size: 18px;
+    }
+
+    .input{
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.22);
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+
+    .row{
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .btn{
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+
+    .btn.primary{
+      background: rgba(124,58,237,0.30);
+      border-color: rgba(124,58,237,0.55);
+    }
+
+    .btn.success{
+      background: rgba(34,197,94,0.20);
+      border-color: rgba(34,197,94,0.45);
+    }
+
+    .btn.danger{
+      background: rgba(239,68,68,0.18);
+      border-color: rgba(239,68,68,0.45);
+    }
+
+    .status{
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .grid{ display:grid; gap: 12px; }
+    .grid.two{
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .list{
+      list-style: none;
+      padding: 0;
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .list-item{
+      border-radius: var(--r2);
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      padding: 12px;
+    }
+  </style>
 </head>
+
 <body>
-    <h1>Itinerary Management</h1>
-    <div id="auth">
-        <h2>Login/Register</h2>
-        <input type="text" id="username" placeholder="Username">
-        <input type="password" id="password" placeholder="Password">
-        <button onclick="register()">Register</button>
-        <button onclick="login()">Login</button>
-        <p id="auth-status"></p>
-    </div>
-    <div id="itineraries" style="display:none;">
-        <h2>Your Itineraries</h2>
-        <form onsubmit="createItinerary(event)">
-            <input type="text" id="tripName" placeholder="Trip Name" required>
-            <input type="text" id="flightNumber" placeholder="Flight Number" required>
-            <input type="text" id="destination" placeholder="Destination" required>
-            <input type="date" id="travelDate" required>
-            <button type="submit">Create Itinerary</button>
-            <button onclick="logout()">Logout</button>
+  <div class="container">
+    <h1 class="title">Itinerary Management</h1>
 
-        </form>
-        <ul id="itinerary-list"></ul>
+    <div id="auth" class="card">
+      <h2>Login / Register</h2>
+
+      <input class="input" type="text" id="username" placeholder="Username">
+      <input class="input" type="password" id="password" placeholder="Password">
+
+      <div class="row">
+        <button class="btn success" onclick="register()">Register</button>
+        <button class="btn primary" onclick="login()">Login</button>
+      </div>
+
+      <p id="auth-status" class="status"></p>
     </div>
 
-    <script>
-        let token = localStorage.getItem('token');
+    <div id="itineraries" class="card" style="display:none;">
+      <h2>Your Itineraries</h2>
 
-        function showAuthStatus(msg) {
-            document.getElementById('auth-status').textContent = msg;
-        }
+      <form class="grid two" onsubmit="createItinerary(event)">
+        <input class="input" type="text" id="tripName" placeholder="Trip Name" required>
+        <input class="input" type="text" id="flightNumber" placeholder="Flight Number" required>
+        <input class="input" type="text" id="destination" placeholder="Destination" required>
+        <input class="input" type="date" id="travelDate" required>
 
-        async function register() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const res = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showAuthStatus('Registered successfully');
-            } else {
-                showAuthStatus(data.error);
-            }
-        }
+        <div class="row">
+          <button class="btn primary" type="submit">Create Itinerary</button>
+          <button class="btn danger" type="button" onclick="logout()">Logout</button>
+        </div>
+      </form>
 
-        function logout() {
-    localStorage.removeItem("token");
-    token = null;
+      <ul id="itinerary-list" class="list"></ul>
+    </div>
+  </div>
 
-    document.getElementById("itineraries").style.display = "none";
-    document.getElementById("auth").style.display = "block";
+  <script>
+    let token = localStorage.getItem('token');
 
-    document.getElementById("auth-status").textContent = "Logged out";
-  } 
-  
-        async function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                token = data.token;
-                localStorage.setItem('token', token);
-                showAuthStatus('Logged in');
-                document.getElementById('auth').style.display = 'none';
-                document.getElementById('itineraries').style.display = 'block';
-                loadItineraries();
-            } else {
-                showAuthStatus(data.error);
-            }
-        }
+    function showAuthStatus(msg) {
+      document.getElementById('auth-status').textContent = msg;
+    }
 
-        async function createItinerary(event) {
-            event.preventDefault();
-            const tripName = document.getElementById('tripName').value;
-            const flightNumber = document.getElementById('flightNumber').value;
-            const destination = document.getElementById('destination').value;
-            const travelDate = document.getElementById('travelDate').value;
-            const res = await fetch('/api/itineraries', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ tripName, flightNumber, destination, travelDate })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                loadItineraries();
-            } else {
-                alert(data.error);
-            }
-        }
+    async function register() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      showAuthStatus(res.ok ? 'Registered successfully' : data.error);
+    }
 
-        async function loadItineraries() {
-            const res = await fetch('/api/itineraries', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const list = await res.json();
-            const ul = document.getElementById('itinerary-list');
-            ul.innerHTML = '';
-            list.forEach(item => {
-                const li = document.createElement('li');
-                li.textContent = `${item.tripName} - ${item.flightNumber} to ${item.destination} on ${item.travelDate}`;
-                ul.appendChild(li);
-            });
-        }
+    function logout() {
+      localStorage.removeItem('token');
+      token = null;
+      document.getElementById('itineraries').style.display = 'none';
+      document.getElementById('auth').style.display = 'block';
+      showAuthStatus('Logged out');
+    }
 
-        if (token) {
-            document.getElementById('auth').style.display = 'none';
-            document.getElementById('itineraries').style.display = 'block';
-            loadItineraries();
-        }
-    </script>
+    async function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        token = data.token;
+        localStorage.setItem('token', token);
+        document.getElementById('auth').style.display = 'none';
+        document.getElementById('itineraries').style.display = 'block';
+        loadItineraries();
+      } else {
+        showAuthStatus(data.error);
+      }
+    }
+
+    async function createItinerary(event) {
+      event.preventDefault();
+      const tripName = document.getElementById('tripName').value;
+      const flightNumber = document.getElementById('flightNumber').value;
+      const destination = document.getElementById('destination').value;
+      const travelDate = document.getElementById('travelDate').value;
+
+      const res = await fetch('/api/itineraries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ tripName, flightNumber, destination, travelDate })
+      });
+
+      if (res.ok) loadItineraries();
+    }
+
+    async function loadItineraries() {
+      const res = await fetch('/api/itineraries', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const list = await res.json();
+
+      const ul = document.getElementById('itinerary-list');
+      ul.innerHTML = '';
+
+      list.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'list-item';
+        li.textContent =
+          `${item.tripName} - ${item.flightNumber} to ${item.destination} on ${item.travelDate}`;
+        ul.appendChild(li);
+      });
+    }
+
+    if (token) {
+      document.getElementById('auth').style.display = 'none';
+      document.getElementById('itineraries').style.display = 'block';
+      loadItineraries();
+    }
+  </script>
 </body>
 </html>

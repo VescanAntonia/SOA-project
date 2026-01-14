@@ -1,18 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="base.css">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Travel System</title>
+  <link rel="stylesheet" href="index.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Travel System</title>
 </head>
 <body>
-    <h1>Smart Travel System</h1>
-    <nav>
-        <a href="http://localhost:8082/itinerary.html">Manage Itineraries</a> |
-        <a href="http://localhost:8083/alerts.html">View Alerts</a>
+  <div class="container">
+    <header class="header">
+      <div>
+        <h1 class="title">Smart Travel System</h1>
+        <p class="subtitle">Manage itineraries and receive real-time travel alerts.</p>
+      </div>
+    </header>
+
+    <nav class="nav">
+      <a href="http://localhost:8082/itinerary.html">✈️ Manage Itineraries</a>
+      <a href="http://localhost:8083/alerts.html">🔔 View Alerts</a>
     </nav>
-    <div id="content">
+
+    <div class="card">
+      <h2>Quick tips</h2>
+      <p class="subtitle" style="margin:0;">
+        1) Register + Login in the Itinerary page. <br/>
+        2) Create an itinerary with a flight number or destination. <br/>
+        3) Trigger an event → you’ll see the alert live in the Alerts page.
+      </p>
     </div>
+  </div>
 </body>
 </html>
