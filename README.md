@@ -11,9 +11,6 @@ The system uses:
 - **WebSockets (Socket.IO)** for server-side notifications
 - **Microfrontend architecture** for the web application
 
-The project is used as the implementation example for a university assignment tutorial on  
-**message brokers, event streaming, and real-time notifications in microservices**.
-
 ---
 
 ## 🎯 Tutorial Focus: Travel Alerts via RabbitMQ → Kafka → WebSockets
